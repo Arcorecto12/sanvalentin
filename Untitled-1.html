@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrera de Corazones</title>
+    <style>
+        body {
+            background-color: #ffcccb;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 20px;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Pantallas */
+        #start-screen, #treasure-screen, #scroll-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #ffcccb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #start-btn {
+            font-size: 22px;
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        /* Juego */
+        #game-container {
+            display: none;
+        }
+
+        #game {
+            position: relative;
+            width: 50%;
+            height: 80vh;
+            background-color: #fff;
+            border: 2px solid #d32f2f;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+
+        #player {
+            font-size: 40px;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .heart {
+            font-size: 30px;
+            position: absolute;
+            top: -50px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        #score {
+            font-size: 20px;
+            color: #d32f2f;
+            margin-top: 10px;
+        }
+
+        /* Pantalla del tesoro */
+        #treasure-box {
+            width: 250px;
+            cursor: pointer;
+        }
+
+        /* Pergamino */
+        #scroll {
+            width: 300px;
+            cursor: pointer;
+        }
+
+        /* Modal */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        #modal h2 {
+            color: #d32f2f;
+        }
+
+        #modal button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #yes-btn {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        #no-btn {
+            background-color: gray;
+            color: white;
+            position: relative; /* Añadido para permitir el movimiento */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de inicio -->
+    <div id="start-screen">
+        <h1>¡Descubre el Tesoro del Amor! ❤️</h1>
+        <p>Un juego lleno de corazones te espera. ¿Serás capaz de encontrar el tesoro escondido?</p>
+        <button id="start-btn" onclick="startGame()">Descubrir el Tesoro ❤️</button>
+    </div>
+
+    <!-- Contenedor del juego -->
+    <div id="game-container">
+        <h1>¡Hola, Glor! 💖</h1>
+        <p>Atrapa al menos 10 corazones para descubrir un mensaje especial.</p>
+        <div id="score">Corazones atrapados: 0</div>
+        <div id="game">
+            <div id="player">🫶</div>
+        </div>
+    </div>
+
+    <!-- Pantalla del tesoro -->
+    <div id="treasure-screen" style="display: none;">
+        <h1>¡Has encontrado un cofre del tesoro! 🎁</h1>
+        <img id="treasure-box" src="https://static.vecteezy.com/system/resources/previews/009/381/399/non_2x/treasure-chest-clipart-design-illustration-free-png.png" 
+             alt="Cofre del Tesoro" onclick="openScroll()">
+        <p>Haz clic en el cofre para descubrir lo que hay dentro.</p>
+    </div>
+
+    <!-- Pantalla del pergamino -->
+    <div id="scroll-screen" style="display: none;">
+        <h1>¡Un mensaje especial! 📜</h1>
+        <img id="scroll" src="https://static.vecteezy.com/system/resources/previews/049/644/751/non_2x/rolled-parchment-with-a-red-ribbon-transparent-background-old-paper-certificate-diploma-award-png.png" 
+             alt="Pergamino" onclick="showFinalMessage()">
+        <p>Haz clic en el pergamino para ver el mensaje.</p>
+    </div>
+
+    <!-- Popup modal -->
+    <div id="modal">
+        <h2>¿Quieres ser mi San Valentín este 14 de febrero? 💖</h2>
+        <button id="yes-btn" onclick="redirectToWhatsApp()">¡Sí!</button>
+        <button id="no-btn" onclick="closeModal()">No</button>
+    </div>
+
+    <script>
+        let score = 0;
+        const heartsToWin = 10;
+        const player = document.getElementById('player');
+        const game = document.getElementById('game');
+        const scoreDisplay = document.getElementById('score');
+        const noBtn = document.getElementById('no-btn');
+
+        function startGame() {
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("game-container").style.display = "block";
+            setInterval(checkCollisions, 100);
+            createHeart(); 
+        }
+
+        function winGame() {
+            document.getElementById("game-container").style.display = "none";
+            document.getElementById("treasure-screen").style.display = "flex";
+        }
+
+        function openScroll() {
+            document.getElementById("treasure-screen").style.display = "none";
+            document.getElementById("scroll-screen").style.display = "flex";
+        }
+
+        function showFinalMessage() {
+            document.getElementById("scroll-screen").style.display = "none";
+            document.getElementById("modal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        function redirectToWhatsApp() {
+            window.location.href = "https://wa.me/51961087127?text=¡Sí,%20quiero%20ser%20tu%20San%20Valentín!%20💖";
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const step = 20;
+            if (e.key === 'ArrowLeft' && player.offsetLeft > 0) player.style.left = `${player.offsetLeft - step}px`;
+            if (e.key === 'ArrowRight' && player.offsetLeft < game.offsetWidth - 40) player.style.left = `${player.offsetLeft + step}px`;
+        });
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.textContent = '💖';
+            heart.style.left = `${Math.random() * (game.offsetWidth - 30)}px`;
+            heart.style.animationDuration = `${Math.random() * 2 + 3}s`;
+            game.appendChild(heart);
+
+            setTimeout(createHeart, 2000);
+        }
+
+        function checkCollisions() {
+            document.querySelectorAll('.heart').forEach(heart => {
+                const heartRect = heart.getBoundingClientRect();
+                const playerRect = player.getBoundingClientRect();
+                if (heartRect.bottom >= playerRect.top && heartRect.left >= playerRect.left && heartRect.right <= playerRect.right) {
+                    heart.remove();
+                    score++;
+                    scoreDisplay.textContent = `Corazones atrapados: ${score}`;
+                    if (score >= heartsToWin) winGame();
+                }
+            });
+        }
+
+        // Mover el botón "No" cuando el mouse esté sobre él
+        noBtn.addEventListener('mouseover', () => {
+            const modalRect = document.getElementById('modal').getBoundingClientRect();
+            const maxX = modalRect.width - noBtn.offsetWidth;
+            const maxY = modalRect.height - noBtn.offsetHeight;
+
+            const randomX = Math.random() * maxX;
+            const randomY = Math.random() * maxY;
+
+            noBtn.style.position = 'absolute';
+            noBtn.style.left = `${randomX}px`;
+            noBtn.style.top = `${randomY}px`;
+        });
+    </script>
+
+</body>
+</html>
